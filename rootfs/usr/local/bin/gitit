@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -euo pipefail
+
+function stack_path() {
+    (
+        cd /opt/gitit
+        stack --allow-different-user path "${@}"
+    )
+}
+
+GITIT_BOOTSTRAP_THEME_DIR=/opt/gitit-bootstrap-theme
+
+if [ ! -e static ]
+then
+    cp -r "${GITIT_BOOTSTRAP_THEME_DIR}/out/static" static
+fi
+
+if [ ! -e templates ]
+then
+    cp -r "${GITIT_BOOTSTRAP_THEME_DIR}/out/templates" templates
+fi
+
+export GHC_PACKAGE_PATH="$(stack_path --ghc-package-path)"
+
+exec "$(stack_path --local-install-root)/bin/gitit" "${@}"
