@@ -17,3 +17,5 @@ RUN apt-get update && \
     /opt/gitit-bootstrap-theme/build.sh
 
 COPY rootfs /
+
+ENTRYPOINT [ "/entrypoint-experimental.sh" ]
