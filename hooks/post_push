@@ -16,7 +16,14 @@ function short_version() {
     local prefix="$(echo "${1}" | sed -r "s/${pattern}/\\1/g")"
     local version="$(echo "${1}" | sed -r "s/${pattern}/\\2/g")"
     local suffix="$(echo "${1}" | sed -r "s/${pattern}/\\3/g")"
-    echo "${prefix}${version%.*}${suffix}"
+
+    if [ -z "${suffix}" ]
+    then
+        echo "${prefix}${version%.*}"
+    else
+        echo "version number of pre-release can not be shortened" >&2
+        return 1
+    fi
 }
 
 source "$(dirname "${BASH_SOURCE[0]}")/env"
@@ -33,11 +40,15 @@ then
         run_or_dry_run docker tag "${IMAGE_NAME}" "${DOCKER_REPO}:${VERSION}"
         run_or_dry_run docker push "${DOCKER_REPO}:${VERSION}"
 
-        if [[ "${VERSION}" =~ \. ]]
+        if SHORT_VERSION="$(short_version "${VERSION}")"
         then
-            VERSION="$(short_version "${VERSION}")"
-        else
-            break
+            if [ "${VERSION}" != "${SHORT_VERSION}" ]
+            then
+                VERSION="${SHORT_VERSION}"
+                continue
+            fi
         fi
+
+        break
     done
 fi
