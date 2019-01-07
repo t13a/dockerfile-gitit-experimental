@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -euo pipefail
+
+function run_or_dry_run() {
+  if [ -n "${DRY_RUN:-}" ]
+  then
+      echo "DRY_RUN: ${@}" >&2
+  else
+      "${@}"
+  fi
+}
+
+function short_version() {
+    local pattern='^([^0-9.]*)([0-9.]*)(.*)$'
+    local prefix="$(echo "${1}" | sed -r "s/${pattern}/\\1/g")"
+    local version="$(echo "${1}" | sed -r "s/${pattern}/\\2/g")"
+    local suffix="$(echo "${1}" | sed -r "s/${pattern}/\\3/g")"
+    echo "${prefix}${version%.*}${suffix}"
+}
+
+source "$(dirname "${BASH_SOURCE[0]}")/env"
+
+CACHE_TAG="${CACHE_TAG:-${DOCKER_TAG}}"
+
+if [ "${CACHE_TAG}" == latest ]
+then
+    VERSION="${GITIT_VERSION_LATEST}"
+
+    while true
+    do
+        echo "push '${IMAGE_NAME}' as '${DOCKER_REPO}:${VERSION}'" >&2
+        run_or_dry_run docker tag "${IMAGE_NAME}" "${DOCKER_REPO}:${VERSION}"
+        run_or_dry_run docker push "${DOCKER_REPO}:${VERSION}"
+
+        if [[ "${VERSION}" =~ \. ]]
+        then
+            VERSION="$(short_version "${VERSION}")"
+        else
+            break
+        fi
+    done
+fi

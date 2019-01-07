@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -euo pipefail
+
+function run_or_dry_run() {
+  if [ -n "${DRY_RUN:-}" ]
+  then
+      echo "DRY_RUN: ${@}" >&2
+  else
+      "${@}"
+  fi
+}
+
+source "$(dirname "${BASH_SOURCE[0]}")/env"
+
+CACHE_TAG="${CACHE_TAG:-${DOCKER_TAG}}"
+
+if [ "${CACHE_TAG}" == latest ]
+then
+    GITIT_VERSION="${GITIT_VERSION_LATEST}"
+else
+    GITIT_VERSION="${CACHE_TAG}"
+fi
+
+echo "build Gitit ${GITIT_VERSION} as '${DOCKER_REPO}:${CACHE_TAG}'" >&2
+
+run_or_dry_run docker build \
+--build-arg=GITIT_IMAGE="t13a/gitit:${GITIT_VERSION}" \
+-f "${DOCKERFILE_PATH}" \
+-t "${IMAGE_NAME}" \
+.
