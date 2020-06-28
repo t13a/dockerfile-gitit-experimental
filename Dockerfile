@@ -32,4 +32,3 @@ RUN apt-get update \
 
 COPY rootfs /
 
-ENTRYPOINT [ "/entrypoint-experimental.sh" ]
